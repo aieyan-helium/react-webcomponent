@@ -11,5 +11,5 @@ governing permissions and limitations under the License.
 */
 
 // require all the test files in the test folder that end with Spec.js or Spec.jsx
-const testsContext = require.context(".", true, /Test.jsx?$/);
+const testsContext = require.context(".", true, /\.test\.(mjs|js)$/);
 testsContext.keys().forEach(testsContext);

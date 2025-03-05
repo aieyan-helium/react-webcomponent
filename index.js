@@ -1,3 +1,3 @@
-export * from "./lib/WebComponent";
-export * from "./lib/dom-model/DOMModel";
-export * from "./lib/dom-model/DOMDecorators";
+export * from "./lib/WebComponent.js";
+export * from "./lib/dom-model/DOMModel.js";
+export * from "./lib/dom-model/DOMDecorators.js";

@@ -1,38 +1,36 @@
-const path = require("path");
+import path from "path";
+import url from "url";
 
-module.exports = {
-  mode: "production",
-  entry: ["./index.js"],
-  output: {
-    globalObject: `typeof self !== 'undefined' ? self : this`,
-    path: path.resolve(__dirname, "dist"),
-    filename: "index.js",
-    library: 'ReactWebcomponent',
-    libraryTarget: 'umd',
-  },
-  module: {
-    rules: [
-      {
-        test: /\.js$/,
-        exclude: /node_modules/,
-        use: {
-          loader: "babel-loader"
-        }
-      }
-    ]
-  },
-  externals: {
-    react: {
-      commonjs: 'react',
-      commonjs2: 'react',
-      amd: 'react',
-      root: 'React',
+const __dirname = path.dirname(url.fileURLToPath(import.meta.url));
+
+export default {
+    mode: "production",
+    entry: ["./index.js"],
+    output: {
+        globalObject: `typeof self !== 'undefined' ? self : this`,
+        path: path.resolve(__dirname, "dist"),
+        filename: "index.js",
+        library: {
+            type: "module",
+        },
+        module: true,
     },
-    'react-dom': {
-      commonjs: 'react-dom',
-      commonjs2: 'react-dom',
-      amd: 'react-dom',
-      root: 'ReactDOM',
+    experiments: {
+        outputModule: true, // Enables ESM output
     },
-  }
+    module: {
+        rules: [
+            {
+                test: /\.js$/,
+                exclude: /node_modules/,
+                use: {
+                    loader: "babel-loader",
+                },
+            },
+            {
+                test: /\.html$/,
+                use: "html-loader",
+            },
+        ],
+    },
 };
