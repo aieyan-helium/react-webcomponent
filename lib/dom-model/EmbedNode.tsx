@@ -1,3 +1,4 @@
+//@ts-nocheck
 /*
 Copyright 2018 Adobe. All rights reserved.
 This file is licensed to you under the Apache License, Version 2.0 (the "License");
@@ -10,12 +11,11 @@ OF ANY KIND, either express or implied. See the License for the specific languag
 governing permissions and limitations under the License.
 */
 
-import React, {Component} from 'react';
+import React, { Component } from "react";
 
 export default class EmbedNode extends Component {
-
     render() {
-        return <div ref={ (element) => this.element = element }/>
+        return <div ref={(element) => (this.element = element)} />;
     }
 
     componentDidMount() {
@@ -36,6 +36,6 @@ export default class EmbedNode extends Component {
     }
 
     get hasStolenNode() {
-        return this.stolenNode != null
+        return this.stolenNode != null;
     }
 }

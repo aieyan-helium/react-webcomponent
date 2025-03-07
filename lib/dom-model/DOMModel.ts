@@ -1,3 +1,4 @@
+//@ts-nocheck
 /*
 Copyright 2018 Adobe. All rights reserved.
 This file is licensed to you under the Apache License, Version 2.0 (the "License");
@@ -23,7 +24,7 @@ export class DOMModel {
         }
         this._exportableProperties.push({
             name,
-            fromDOM
+            fromDOM,
         });
     }
 
@@ -34,7 +35,12 @@ export class DOMModel {
      * @returns {Object} - the registered property
      */
     getProperty(name) {
-        return this._exportableProperties && this._exportableProperties.find((exportableProperty) => exportableProperty.name === name);
+        return (
+            this._exportableProperties &&
+            this._exportableProperties.find(
+                (exportableProperty) => exportableProperty.name === name
+            )
+        );
     }
 
     /**

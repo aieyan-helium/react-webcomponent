@@ -5,7 +5,7 @@ const __dirname = path.dirname(url.fileURLToPath(import.meta.url));
 
 export default {
     mode: "production",
-    entry: ["./index.js"],
+    entry: ["./index.ts"],
     output: {
         globalObject: `typeof self !== 'undefined' ? self : this`,
         path: path.resolve(__dirname, "dist"),
@@ -18,8 +18,18 @@ export default {
     experiments: {
         outputModule: true, // Enables ESM output
     },
+    resolve: {
+        extensions: [".ts", ".tsx", ".js"],
+    },
     module: {
         rules: [
+            {
+                test: /\.(tsx)$/,
+                exclude: /node_modules/,
+                use: {
+                    loader: "ts-loader",
+                },
+            },
             {
                 test: /\.js$/,
                 exclude: /node_modules/,
