@@ -1,3 +1,5 @@
+//@ts-nocheck
+
 /*
 Copyright 2018 Adobe. All rights reserved.
 This file is licensed to you under the Apache License, Version 2.0 (the "License");
@@ -26,11 +28,10 @@ function handleDOMNodeMutation(mutations, observer) {
     }
 }
 /**
-* This is a container around a HTMLElement which allows for the element to be removed from the DOM
-* replaced with a comment and then returned back to the DOM
-*/
+ * This is a container around a HTMLElement which allows for the element to be removed from the DOM
+ * replaced with a comment and then returned back to the DOM
+ */
 export default class DOMNode {
-
     /**
      * Removes the node from the DOM and replaces with a comment
      * @returns {HTMLElement} - the HTML DOM node
@@ -45,7 +46,9 @@ export default class DOMNode {
 
         var placeholder = this.placeholder;
         if (!placeholder) {
-            placeholder = this.placeholder = document.createComment('placeholder for ' + node.nodeName);
+            placeholder = this.placeholder = document.createComment(
+                "placeholder for " + node.nodeName
+            );
             placeholder._reactComponentDataNode = this;
         }
 
@@ -80,7 +83,9 @@ export default class DOMNode {
         if (this.observer) {
             this.stopObserving();
         }
-        const observer = this.observer = new MutationObserver(handleDOMNodeMutation);
+        const observer = (this.observer = new MutationObserver(
+            handleDOMNodeMutation
+        ));
         observer._domNode = this;
         observer.observe(this.node.parentNode, domNodeMutationOptions);
     }
@@ -112,7 +117,6 @@ export default class DOMNode {
      * @param {Array<Object>} - the list of the child element
      */
     add(list) {
-
         this.list = list;
         var target = this.span || this.node;
         do {

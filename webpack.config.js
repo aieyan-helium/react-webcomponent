@@ -5,7 +5,7 @@ const __dirname = path.dirname(url.fileURLToPath(import.meta.url));
 
 export default {
     mode: "production",
-    entry: ["./index.js"],
+    entry: ["./index.ts"],
     output: {
         globalObject: `typeof self !== 'undefined' ? self : this`,
         path: path.resolve(__dirname, "dist"),
@@ -28,9 +28,19 @@ export default {
                 },
             },
             {
+                test: /\.tsx?$/,
+                exclude: /node_modules/,
+                use: {
+                    loader: "babel-loader",
+                },
+            },
+            {
                 test: /\.html$/,
                 use: "html-loader",
             },
         ],
+    },
+    resolve: {
+        extensions: [".ts", ".tsx", ".js", ".json"],
     },
 };

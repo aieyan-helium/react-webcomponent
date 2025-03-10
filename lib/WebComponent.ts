@@ -1,3 +1,4 @@
+//@ts-nocheck
 /*
 Copyright 2018 Adobe. All rights reserved.
 This file is licensed to you under the Apache License, Version 2.0 (the "License");
@@ -151,16 +152,10 @@ export class CustomElement extends HTMLElement {
     }
 }
 
-/**
- * Creates a CustomElement
- * @param {function} ReactComponent
- * @param {DOMModel} Model
- * @param {string} renderRoot
- */
 export function createCustomElement(
-    ReactComponent,
-    Model,
-    renderRoot = "element"
+    ReactComponent: React.ComponentType<any>,
+    Model: DOMModel,
+    renderRoot: "element" = "element"
 ) {
     class CustomCustomElement extends CustomElement {}
     CustomCustomElement.domModel = Model;
