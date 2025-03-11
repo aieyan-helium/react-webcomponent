@@ -1,5 +1,3 @@
-//@ts-nocheck
-
 /*
 Copyright 2018 Adobe. All rights reserved.
 This file is licensed to you under the Apache License, Version 2.0 (the "License");
@@ -14,16 +12,27 @@ governing permissions and limitations under the License.
 
 export class DOMModel {
     prototype: any;
+    _attributes?: Array<any> | null;
+    _attributeKeys?: Record<string, any>;
+    _observers?: Record<string, any> | null;
+    _events?: Array<string>;
+    _exportableProperties?: Array<any> | null;
+
+    constructor() {
+        this._exportableProperties = [];
+    }
+
     /**
      * Registers this property on the model
      *
      * @param {String} name - the name of the property
      * @param {function} fromDOM - the method to convert from DOM to Model
      */
-    addProperty(name, fromDOM) {
+    addProperty(name: string, fromDOM: () => any) {
         if (!this._exportableProperties) {
             this._exportableProperties = [];
         }
+
         this._exportableProperties.push({
             name,
             fromDOM,
@@ -36,7 +45,7 @@ export class DOMModel {
      * @param   {String} name - the name fo the property we are looking from
      * @returns {Object} - the registered property
      */
-    getProperty(name) {
+    getProperty(name: string) {
         return (
             this._exportableProperties &&
             this._exportableProperties.find(
@@ -50,7 +59,7 @@ export class DOMModel {
      *
      * @param {String} attrName - the attribute name
      */
-    addAttribute(attrName) {
+    addAttribute(attrName: string) {
         if (!this._attributes) {
             this._attributes = [];
         }
@@ -63,10 +72,11 @@ export class DOMModel {
      * @param {String} attrName - the name of the attribute
      * @param {String} key - the key
      */
-    addAttributeKey(attrName, key) {
+    addAttributeKey(attrName: string, key: string) {
         if (!this._attributeKeys) {
             this._attributeKeys = {};
         }
+
         this._attributeKeys[attrName] = key;
     }
 
@@ -76,7 +86,7 @@ export class DOMModel {
      * @param   {String} attrName - the attribute name to look for
      * @returns {String} - the key of the attribute
      */
-    getAttributeKey(attrName) {
+    getAttributeKey(attrName: string) {
         return this._attributeKeys && this._attributeKeys[attrName];
     }
 
@@ -85,11 +95,11 @@ export class DOMModel {
      *
      * @param {String} evtName - the event name
      */
-    addEvent(evtName) {
+
+    addEvent(evtName: string) {
         if (!this._events) {
             this._events = [];
         }
-
         this._events.push(evtName);
     }
 
@@ -98,10 +108,11 @@ export class DOMModel {
      *
      * @param {MutationObserver} observer - the mutation observer
      */
-    addObserver(observer) {
+    addObserver(observer: MutationObserver) {
         if (!this._observers) {
             this._observers = [];
         }
+
         this._observers.push(observer);
     }
 
@@ -128,13 +139,15 @@ export class DOMModel {
      *
      * @param   {HTMLElement} element - the element to parse the model from
      */
-    fromDOM(element) {
+    fromDOM(element: HTMLElement) {
         if (!this._exportableProperties) {
             return;
         }
 
         this._exportableProperties.forEach((exportableProperty) => {
             let result = exportableProperty.fromDOM(element);
+
+            //@ts-ignore
             this[exportableProperty.name] = result;
         });
     }
@@ -150,7 +163,9 @@ export class DOMModel {
         }
 
         let wrappedProperties = {};
-        this._exportableProperties.forEach((property) => {
+
+        this._exportableProperties.forEach((property: any) => {
+            //@ts-ignore
             wrappedProperties[property.name] = this[property.name];
         });
         return wrappedProperties;
@@ -161,10 +176,11 @@ export class DOMModel {
      */
     destroy() {
         if (this._observers) {
-            this._observers.forEach((observer) => {
+            this._observers.forEach((observer: MutationObserver) => {
                 observer.disconnect();
             });
         }
+
         this._observers = null;
         this._attributes = null;
         this._exportableProperties = null;
