@@ -3,6 +3,8 @@
         "target": "ESNext",
         "module": "ESNext",
         "lib": ["dom", "esnext"],
+        "jsx": "react-jsx",
+        "moduleResolution": "node",
         "allowJs": true,
         "skipLibCheck": true,
         "esModuleInterop": true,
@@ -10,10 +12,12 @@
         "strict": true,
         "forceConsistentCasingInFileNames": true,
         "noFallthroughCasesInSwitch": true,
-        "moduleResolution": "node",
         "resolveJsonModule": true,
         "isolatedModules": true,
-        "noEmit": true
+        "noEmit": false,
+        "declaration": true,
+        "declarationDir": "./dist",
+        "outDir": "./dist"
     },
     "include": ["lib/**/*", "index.ts"]
 }

@@ -1,0 +1,1 @@
+{"root":["./lib/webcomponent.ts","./lib/dom-model/domdecorators.tsx","./lib/dom-model/dommodel.ts","./lib/dom-model/domnode.ts","./lib/dom-model/embednode.tsx","./index.ts"],"errors":true,"version":"5.8.2"}

@@ -13,6 +13,7 @@ governing permissions and limitations under the License.
 */
 
 export class DOMModel {
+    prototype: any;
     /**
      * Registers this property on the model
      *

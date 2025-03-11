@@ -1,4 +1,3 @@
-//@ts-nocheck
 /*
 Copyright 2018 Adobe. All rights reserved.
 This file is licensed to you under the Apache License, Version 2.0 (the "License");
@@ -11,9 +10,10 @@ OF ANY KIND, either express or implied. See the License for the specific languag
 governing permissions and limitations under the License.
 */
 
-import React from "react";
+import React, { ComponentType } from "react";
 import ReactDOM from "react-dom";
-import { createRoot } from "react-dom/client";
+import { createRoot, Root } from "react-dom/client";
+import { DOMModel } from "./dom-model/DOMModel";
 
 const _rootShadows = new WeakMap();
 const _models = new WeakMap();
@@ -24,10 +24,11 @@ const _models = new WeakMap();
  * @param   {CustomElement} component - the component to parse
  * @returns {DOMModel} - the generated model
  */
-function generateModel(component) {
-    let model = _models.get(component);
-    if (!model && component.constructor.domModel) {
-        model = new component.constructor.domModel(component);
+function generateModel(component: CustomElement) {
+    let model: DOMModel = _models.get(component);
+    const constructor = component.constructor as typeof CustomElement;
+    if (!model && constructor.domModel) {
+        model = new constructor.domModel(component);
         model.fromDOM(component);
         _models.set(component, model);
     }
@@ -40,12 +41,12 @@ function generateModel(component) {
  * @param   {CustomElement} component - the component to parse the model fromDO
  * @returns {Object} - the events object
  */
-function getEvents(component) {
-    let eventsMap = {};
+function getEvents(component: CustomElement) {
+    let eventsMap: Record<string, any> = {};
     let model = _models.get(component);
     if (model) {
         let events = model.events;
-        events.forEach((eventName) => {
+        events.forEach((eventName: string) => {
             let eventFn = eventName;
             if (!eventFn.startsWith("on")) {
                 if (!/[A-Z]/.test(eventFn[0])) {
@@ -53,7 +54,7 @@ function getEvents(component) {
                 }
                 eventFn = "on" + eventFn;
             }
-            eventsMap[eventFn] = function (event) {
+            eventsMap[eventFn] = function (event: any) {
                 component.dispatchEvent(
                     new CustomEvent(eventName, {
                         detail: event.detail,
@@ -72,10 +73,11 @@ function getEvents(component) {
  *
  * @param   {CustomElement} component the component to render
  */
-function renderCustomElement(component) {
-    const ReactComponent = component.constructor.ReactComponent;
+function renderCustomElement(component: CustomElement) {
+    const constructor = component.constructor as typeof CustomElement;
+    const ReactComponent = constructor.ReactComponent;
     const model = generateModel(component);
-    const properties = model.properties;
+    const properties: any = model.properties;
     const events = getEvents(component);
 
     const reactElem = React.createElement(
@@ -92,9 +94,19 @@ function renderCustomElement(component) {
 }
 
 export class CustomElement extends HTMLElement {
+    __reactComp?: Root;
+    static ReactComponent:
+        | string
+        | React.FunctionComponent<any>
+        | React.ComponentClass<any, any>;
+    static domModel?: any;
+    rootDiv?: HTMLDivElement;
+    static renderRoot?: "element" | "container" | "shadowRoot";
+
     connectedCallback() {
-        let rootEl = this;
-        switch (this.constructor.renderRoot) {
+        let rootEl: any = this;
+        const constructor = this.constructor as typeof CustomElement;
+        switch (constructor.renderRoot) {
             case "container":
                 rootEl = this.rootDiv = document.createElement("div");
                 this.appendChild(rootEl);
@@ -113,11 +125,11 @@ export class CustomElement extends HTMLElement {
         return generateModel(this);
     }
 
-    _updateModel(event) {
+    _updateModel(event: any) {
         let model = _models.get(this);
         if (model) {
             let changedProperties = event.detail;
-            changedProperties.forEach((property) => {
+            changedProperties.forEach((property: any) => {
                 model[property.propertyName] = property.value;
             });
         }
@@ -127,6 +139,7 @@ export class CustomElement extends HTMLElement {
     disconnectedCallback() {
         const rootEl = _rootShadows.get(this);
         if (rootEl) {
+            //@ts-ignore
             ReactDOM.unmountComponentAtNode(_rootShadows.get(this));
         }
 
@@ -141,7 +154,7 @@ export class CustomElement extends HTMLElement {
         }
     }
 
-    attributeChangedCallback(name, oldValue, newValue) {
+    attributeChangedCallback(name: string, oldValue: any, newValue: any) {
         let model = _models.get(this);
         if (model) {
             let key = model.getAttributeKey(name);
@@ -152,12 +165,15 @@ export class CustomElement extends HTMLElement {
     }
 }
 
-export function createCustomElement(
+export function createCustomElement<T extends DOMModel>(
     ReactComponent: React.ComponentType<any>,
-    Model: DOMModel,
-    renderRoot: "element" = "element"
+    Model: new (...args: any[]) => T,
+    renderRoot: "element" | "container" | "shadowRoot" = "element"
 ) {
-    class CustomCustomElement extends CustomElement {}
+    class CustomCustomElement extends CustomElement {
+        static observedAttributes: any;
+    }
+
     CustomCustomElement.domModel = Model;
     CustomCustomElement.ReactComponent = ReactComponent;
     CustomCustomElement.renderRoot = renderRoot;
