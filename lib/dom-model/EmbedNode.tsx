@@ -1,5 +1,3 @@
-//@ts-nocheck
-
 /*
 Copyright 2018 Adobe. All rights reserved.
 This file is licensed to you under the Apache License, Version 2.0 (the "License");
@@ -14,13 +12,24 @@ governing permissions and limitations under the License.
 
 import React, { Component } from "react";
 
-export default class EmbedNode extends Component {
+interface EmbedNodeProps {
+    item: {
+        stealNode: () => HTMLDivElement;
+        returnNode: () => HTMLDivElement;
+    };
+}
+
+export default class EmbedNode extends Component<EmbedNodeProps> {
+    element?: HTMLDivElement | null;
+    parent: any;
+    stolenNode: any;
+
     render() {
-        return <div ref={(element) => (this.element = element)} />;
+        return <div ref={(element) => (this.element = element) as any} />;
     }
 
     componentDidMount() {
-        this.parent = this.element.parentElement;
+        this.parent = this.element?.parentElement;
         this.stolenNode = this.props.item.stealNode();
         this.parent.replaceChild(this.stolenNode, this.element);
     }

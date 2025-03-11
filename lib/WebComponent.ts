@@ -139,8 +139,8 @@ export class CustomElement extends HTMLElement {
     disconnectedCallback() {
         const rootEl = _rootShadows.get(this);
         if (rootEl) {
-            //@ts-ignore
-            ReactDOM.unmountComponentAtNode(_rootShadows.get(this));
+            const root = createRoot(rootEl);
+            root.unmount();
         }
 
         if (this.rootDiv) {
