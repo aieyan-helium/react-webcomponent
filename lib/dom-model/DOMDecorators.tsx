@@ -1,5 +1,3 @@
-//@ts-nocheck
-
 /*
 Copyright 2018 Adobe. All rights reserved.
 This file is licensed to you under the Apache License, Version 2.0 (the "License");
@@ -11,15 +9,25 @@ the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR REPRESENTA
 OF ANY KIND, either express or implied. See the License for the specific language
 governing permissions and limitations under the License.
 */
+import { DOMModel } from "./DOMModel";
 import DOMNode from "./DOMNode";
 import EmbedNode from "./EmbedNode";
 import React from "react";
 
 let _idCount = 0;
 
-function makeDecorator(callback) {
-    return function (...args) {
+interface TargetElement extends HTMLElement {
+    _isObserved: boolean;
+}
+
+interface Descriptor extends PropertyDescriptor {
+    initializer?: () => void;
+}
+
+function makeDecorator(callback: any) {
+    return function (...args: Array<unknown>) {
         if (args.length === 3 && typeof args[2] === "object") {
+            //@ts-ignore
             return callback().apply(this, args);
         } else {
             return callback(...args);
@@ -27,20 +35,24 @@ function makeDecorator(callback) {
     };
 }
 
-function makeDOMNode(target, selector) {
+function makeDOMNode(target: Element | NodeListOf<Element>, selector: string) {
     const dataNode = new DOMNode();
     dataNode.node = target;
     dataNode.selector = selector;
+
+    //@ts-ignore
     target._reactComponentDataNode = dataNode;
     return dataNode;
 }
 
-function findCommentNode(element, selector) {
+function findCommentNode(element: Element, selector: string) {
     for (let i = 0; i < element.childNodes.length; i++) {
         let node = element.childNodes[i];
         if (
             node.nodeType === Node.COMMENT_NODE &&
+            //@ts-ignore
             node._reactComponentDataNode &&
+            //@ts-ignore
             node._reactComponentDataNode.selector === selector
         ) {
             return node;
@@ -48,7 +60,11 @@ function findCommentNode(element, selector) {
     }
 }
 
-function queryChildren(element, selector, all = false) {
+function queryChildren(
+    element: Element,
+    selector: string,
+    all: boolean = false
+) {
     if (typeof selector !== "string") {
         console.warn("Query selector must be string!");
         return;
@@ -56,6 +72,7 @@ function queryChildren(element, selector, all = false) {
     let id = element.id,
         guid = (element.id = id || "query_children_" + _idCount++),
         attr = "#" + guid + " > ",
+        //@ts-ignore
         scopedSelector = attr + (selector + "").replace(",", "," + attr, "g");
     let result = all
         ? element.querySelectorAll(scopedSelector)
@@ -72,7 +89,11 @@ function queryChildren(element, selector, all = false) {
  * @returns {function} - the decorator function
  */
 let byContentVal = makeDecorator(function () {
-    return function (target, key, descriptor) {
+    return function (
+        target: DOMModel,
+        key: string,
+        descriptor: PropertyDescriptor
+    ) {
         if (target.addProperty) {
             descriptor.writable = true;
             target.addProperty(key, (element) => {
@@ -97,13 +118,13 @@ let byContentVal = makeDecorator(function () {
  * @param   {[String} attrName - the attribute we are parsing
  * @returns {function} - the decorator function
  */
-let byAttrVal = makeDecorator(function (attrName) {
-    return function (target, key, descriptor) {
+let byAttrVal = makeDecorator(function (attrName: string) {
+    return function (target: DOMModel, key: string, descriptor: Descriptor) {
         descriptor.writable = true;
         let attributeName = attrName || key;
         target.addAttribute(attributeName);
         target.addAttributeKey(attributeName, key);
-        let defaultValue;
+        let defaultValue: any;
         if (descriptor.initializer) {
             defaultValue = descriptor.initializer();
         }
@@ -127,13 +148,13 @@ let byAttrVal = makeDecorator(function (attrName) {
  * @param   {[String} attrName - the attribute we are parsing
  * @returns {function} - the decorator function
  */
-let byJsonAttrVal = makeDecorator(function (attrName) {
-    return function (target, key, descriptor) {
+let byJsonAttrVal = makeDecorator(function (attrName: string) {
+    return function (target: DOMModel, key: string, descriptor: Descriptor) {
         descriptor.writable = true;
         let attributeName = attrName || key;
         target.addAttribute(attributeName);
         target.addAttributeKey(attributeName, key);
-        let defaultValue;
+        let defaultValue: any;
         if (descriptor.initializer) {
             defaultValue = descriptor.initializer();
         }
@@ -142,7 +163,9 @@ let byJsonAttrVal = makeDecorator(function (attrName) {
                 return (
                     element &&
                     (element.hasAttribute(attributeName)
-                        ? JSON.parse(element.getAttribute(attributeName))
+                        ? JSON.parse(
+                              element.getAttribute(attributeName) as string
+                          )
                         : defaultValue)
                 );
             });
@@ -155,8 +178,8 @@ let byJsonAttrVal = makeDecorator(function (attrName) {
  * @param {String} attrName - the name of the attribute
  * @param {Object} [config = null] - the configuration for the property
  */
-let byBooleanAttrVal = makeDecorator(function (attrName) {
-    return function (target, key, descriptor) {
+let byBooleanAttrVal = makeDecorator(function (attrName: string) {
+    return function (target: DOMModel, key: string, descriptor: Descriptor) {
         descriptor.writable = true;
         let attributeName = attrName || key;
         target.addAttribute(attributeName);
@@ -184,11 +207,11 @@ let byBooleanAttrVal = makeDecorator(function (attrName) {
  * @param   {Object} observeOptions - the options passed to observe method
  */
 function attachContentListObserver(
-    target,
-    key,
-    element,
-    valueFn,
-    observeOptions
+    target: DOMModel,
+    key: string,
+    element: TargetElement,
+    valueFn: (element?: any) => void,
+    observeOptions?: Record<string, any>
 ) {
     if (element && !element._isObserved) {
         const observer = new MutationObserver(() => {
@@ -203,6 +226,7 @@ function attachContentListObserver(
                 })
             );
         });
+
         element._isObserved = true;
         observer.observe(
             element,
@@ -229,7 +253,13 @@ function attachContentListObserver(
  * @param   {HTMLElement} child - the element we are observing
  * @param   {function} valueFn - the function to return the value of the child
  */
-function attachContentObserver(target, key, element, child, valueFn) {
+function attachContentObserver(
+    target: DOMModel,
+    key: string,
+    element: TargetElement,
+    child: TargetElement,
+    valueFn: (element?: any) => void
+) {
     if (child && !child._isObserved) {
         const observer = new MutationObserver(() => {
             element.dispatchEvent(
@@ -266,13 +296,13 @@ function attachContentObserver(target, key, element, child, valueFn) {
  *
  * @returns {function} - the decorator function
  */
-let byContent = makeDecorator(function (selector) {
-    return function (target, key, descriptor) {
+let byContent = makeDecorator(function (selector: string) {
+    return function (target: DOMModel, key: string, descriptor: Descriptor) {
         descriptor.writable = true;
         if (target.addProperty) {
             target.addProperty(key, (element) => {
                 if (element && element instanceof HTMLElement) {
-                    let node = null;
+                    let node: any = null;
 
                     let valueFn = () => {
                         if (!node) {
@@ -280,7 +310,9 @@ let byContent = makeDecorator(function (selector) {
                             if (child) {
                                 node = (
                                     <EmbedNode
-                                        item={makeDOMNode(child, selector)}
+                                        item={
+                                            makeDOMNode(child, selector) as any
+                                        }
                                     />
                                 );
                             }
@@ -295,8 +327,8 @@ let byContent = makeDecorator(function (selector) {
                         attachContentObserver(
                             target,
                             key,
-                            element,
-                            element,
+                            element as TargetElement,
+                            element as TargetElement,
                             valueFn
                         );
                     }
@@ -313,15 +345,24 @@ let byContent = makeDecorator(function (selector) {
  * @param   {String} childName - the child element name
  * @returns {function} - the decorator function
  */
-let byChildContentVal = makeDecorator(function (childName) {
-    return function (target, key, descriptor) {
+let byChildContentVal = makeDecorator(function (childName: string) {
+    return function (target: DOMModel, key: string, descriptor: Descriptor) {
         descriptor.writable = true;
         if (target.addProperty) {
             target.addProperty(key, (element) => {
                 if (element && element instanceof HTMLElement) {
-                    let child = element.querySelector(childName);
+                    let child = element.querySelector(
+                        childName
+                    ) as TargetElement;
                     let valueFn = () => child && child.innerText;
-                    attachContentObserver(target, key, element, child, valueFn);
+
+                    attachContentObserver(
+                        target,
+                        key,
+                        element as TargetElement,
+                        child,
+                        valueFn
+                    );
                     return valueFn();
                 }
             });
@@ -334,12 +375,13 @@ let byChildContentVal = makeDecorator(function (childName) {
  * @param {DOMModel} refType - the DOMModel class to parse with
  */
 
-let byModel = makeDecorator(function (refType) {
-    return function (target, key, descriptor) {
+let byModel = makeDecorator(function (refType: DOMModel) {
+    return function (target: DOMModel, key: string, descriptor: Descriptor) {
         descriptor.writable = true;
         if (target.addProperty) {
             target.addProperty(key, (element) => {
                 if (element && element instanceof HTMLElement) {
+                    //@ts-ignore
                     let value = new refType();
                     value.fromDOM(element);
                     return value;
@@ -354,17 +396,21 @@ let byModel = makeDecorator(function (refType) {
  * @param {String} selector - the selector for the children
  * @param {DOMModel} refType - the DOMExportable class of the child model
  */
-let byChildrenRefArray = makeDecorator(function (selector, refType) {
-    return function (target, key, descriptor) {
+let byChildrenRefArray = makeDecorator(function (
+    selector: string,
+    refType: DOMModel
+) {
+    return function (target: DOMModel, key: string, descriptor: Descriptor) {
         descriptor.writable = true;
         if (target.addProperty) {
             target.addProperty(key, (element) => {
-                let valueFn = function (domElement) {
+                let valueFn = function (domElement: HTMLElement) {
                     let result = [];
                     if (domElement && domElement instanceof HTMLElement) {
                         let children = domElement.querySelectorAll(selector);
 
                         for (let i = 0, l = children.length; i < l; ++i) {
+                            //@ts-ignore
                             let value = new refType();
                             value.fromDOM(children[i]);
                             result.push(value);
@@ -390,12 +436,17 @@ let byChildrenRefArray = makeDecorator(function (selector, refType) {
  * @param {Object} childrenMap - a map between a node name string and a DOMModel
  * @returns {function} - the decorator function
  */
-let byChildrenTypeArray = makeDecorator(function (childrenMap) {
-    return function (target, key, descriptor) {
+let byChildrenTypeArray = makeDecorator(function (
+    childrenMap: Record<string, any>
+) {
+    return function (target: DOMModel, key: string, descriptor: Descriptor) {
         descriptor.writable = true;
         if (target.addProperty) {
             target.addProperty(key, (element) => {
-                let valueFn = function (domElement, childrenMap) {
+                let valueFn = function (
+                    domElement: HTMLElement,
+                    childrenMap: Record<string, any>
+                ) {
                     var result = [];
                     if (domElement && domElement instanceof HTMLElement) {
                         let children = domElement.children;
@@ -412,7 +463,7 @@ let byChildrenTypeArray = makeDecorator(function (childrenMap) {
                     }
                     return result;
                 };
-                let observerFn = (domElement) => {
+                let observerFn = (domElement: HTMLElement) => {
                     return valueFn(domElement, childrenMap);
                 };
                 // TODO optimize this so we don't actually observe everything
@@ -430,15 +481,16 @@ let byChildrenTypeArray = makeDecorator(function (childrenMap) {
  * @param   {String} selector - the selector that will be ran against the element, and use the first result of the query.
  * @returns {function} - the decorator function
  */
-let byChildRef = makeDecorator(function (selector, refType) {
-    return function (target, key, descriptor) {
+let byChildRef = makeDecorator(function (selector: string, refType: DOMModel) {
+    return function (target: DOMModel, key: string, descriptor: Descriptor) {
         descriptor.writable = true;
         if (target.addProperty) {
             target.addProperty(key, (element) => {
-                let valueFn = (domElement) => {
+                let valueFn = (domElement: HTMLElement) => {
                     if (domElement && domElement instanceof HTMLElement) {
                         let child = domElement.querySelector(selector);
                         if (child) {
+                            //@ts-ignore
                             let value = new refType();
                             value.fromDOM(child);
                             return value;
@@ -456,13 +508,13 @@ let byChildRef = makeDecorator(function (selector, refType) {
  * @param {String} selector - the selector used
  * @returns {function} - the decorator function
  */
-let byChildModelVal = makeDecorator(function (selector) {
-    return function (target, key, descriptor) {
+let byChildModelVal = makeDecorator(function (selector: string) {
+    return function (target: DOMModel, key: string, descriptor: Descriptor) {
         descriptor.writable = true;
         if (target.addProperty) {
             target.addProperty(key, (element) => {
                 if (element && element instanceof HTMLElement) {
-                    let child = element.querySelector(selector);
+                    let child = element.querySelector(selector) as any;
                     if (
                         child &&
                         child._generateModel &&
@@ -482,8 +534,8 @@ let byChildModelVal = makeDecorator(function (selector) {
  * @param   {String} eventName - the name of the event
  * @returns {function} - the decorator function
  */
-let registerEvent = makeDecorator(function (eventName) {
-    return function (target, key, descriptor) {
+let registerEvent = makeDecorator(function (eventName: string) {
+    return function (target: DOMModel, key: string, descriptor: Descriptor) {
         if (target.addEvent) {
             target.addEvent(eventName || key);
         }

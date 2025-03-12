@@ -28,7 +28,7 @@ export class DOMModel {
      * @param {String} name - the name of the property
      * @param {function} fromDOM - the method to convert from DOM to Model
      */
-    addProperty(name: string, fromDOM: () => any) {
+    addProperty(name: string, fromDOM: (element?: any) => any) {
         if (!this._exportableProperties) {
             this._exportableProperties = [];
         }

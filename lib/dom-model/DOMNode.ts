@@ -32,6 +32,8 @@ function handleDOMNodeMutation(mutations, observer) {
  * replaced with a comment and then returned back to the DOM
  */
 export default class DOMNode {
+    node: any;
+    selector: any;
     /**
      * Removes the node from the DOM and replaces with a comment
      * @returns {HTMLElement} - the HTML DOM node
